@@ -7,11 +7,14 @@
 #define SODAQ_LSM303C_ACCEL_ADDRESS 0b0011101
 #define SODAQ_LSM303C_MAG_ADDRESS 0b0011110
 
+#define WHOAMI_ID_A_LSM303C 0b01000001
+#define WHOAMI_ID_M_LSM303C 0b00111101
+
 class Sodaq_LSM303C
 {
 public:
-
-    enum Register {
+    enum Register
+    {
         WHO_AM_I_A = 0x0F,
         ACT_THS_A = 0x1E,
         ACT_DUR_A = 0x1F,
@@ -68,7 +71,8 @@ public:
         INT_THS_H_M = 0x33,
     };
 
-    enum RegisterBits {
+    enum RegisterBits
+    {
         // CTRL_REG1_A
         Xen = 0,
         Yen = 1,
@@ -115,11 +119,11 @@ public:
         DEC0 = 4,
         ST2 = 3,
         ST1 = 2,
-        P2_ACT = 1,
-        H_LACTIVE = 0,
+        H_LACTIVE = 1,
+        PP_OD = 0,
 
         // CTRL_REG6_A
-        BOOT = 0x25,
+        BOOT = 7,
 
         // CTRL_REG7_A
         DCRM2 = 5,
@@ -141,7 +145,7 @@ public:
 
         // IG_CFG1_A
         AOI = 7,
-        // 6D = 6,
+        A6D = 6,
         ZHIE = 5,
         ZLIE = 4,
         YHIE = 3,
@@ -158,16 +162,6 @@ public:
         XH = 1,
         XL = 0,
 
-        //IG_THS_X1_A & IG_THS_Y1_A & IG_THS_Z1_A
-        THS7 = 7,
-        THS6 = 6,
-        THS5 = 5,
-        THS4 = 4,
-        THS3 = 3,
-        THS2 = 2,
-        THS1 = 1,
-        THS0 = 0,
-
         // IG_DUR1_A
         WAIT1 = 7,
         DUR1_6 = 6,
@@ -179,7 +173,8 @@ public:
         DUR1_0 = 0,
     };
 
-    enum MagRegisterBits {
+    enum MagRegisterBits
+    {
         // CTRL_REG1_M
         ST = 0,
         DO0 = 2,
@@ -198,7 +193,7 @@ public:
         // CTRL_REG3_M
         MD0 = 0,
         MD1 = 1,
-        MSIM = 3,
+        MSIM = 2,
         LP = 5,
         I2C_DISABLE_M = 7,
 
@@ -219,14 +214,14 @@ public:
 
         Magxor = 4,
         Magyor = 5,
-        Magzor = 5,
+        Magzor = 6,
 
-        Zyxor = 6,
+        Zyxor = 7,
 
         // INT_CFG_M
         IEN = 0,
-        IEL = 2,
-        IEA = 3,
+        IEL = 1,
+        IEA = 2,
         ZIEN = 5,
         YIEN = 6,
         XIEN = 7,
@@ -241,7 +236,7 @@ public:
         PTH_Y = 6,
         PTH_X = 7,
 
-        // INT_THS_L_M 7 & INT_THS_H_M
+        //INT_THS_H_M
         THS14 = 6,
         THS13 = 5,
         THS12 = 4,
@@ -249,34 +244,45 @@ public:
         THS10 = 2,
         THS9 = 1,
         THS8 = 0,
+
+        //INT_THS_L_M 7
+        THS7 = 7,
+        THS6 = 6,
+        THS5 = 5,
+        THS4 = 4,
+        THS3 = 3,
+        THS2 = 2,
+        THS1 = 1,
+        THS0 = 0,
     };
 
     // the values of the following enum are 0b(LPen,HR)
-    enum AccelerometerMode {
+    enum AccelerometerMode
+    {
         LowPowerMode = 0b10,
         NormalMode = 0b00,
         HighResMode = 0b01
     };
 
-    enum MagnetometerMode {
+    enum MagnetometerMode
+    {
         MagLowPowerMode = 0b0,
         MagHighResMode = 0b1
     };
 
-    enum AccelerometerODR {
+    enum AccelerometerODR
+    {
         PowerDown_A = 0b000,
-        HrNormalLowPower1Hz = 0b0001,
-        HrNormalLowPower10Hz = 0b0010,
-        HrNormalLowPower25Hz = 0b0011,
-        HrNormalLowPower50Hz = 0b0100,
-        HrNormalLowPower100Hz = 0b0101,
-        HrNormalLowPower200Hz = 0b0110,
-        HrNormalLowPower400Hz = 0b0111,
-        LowPower1k6Hz = 0b1000,
-        HrNormal1k344LowPower5k376Hz = 0b1001
+        HrNormalLowPower10Hz = 0b0001,
+        HrNormalLowPower50Hz = 0b0010,
+        HrNormalLowPower100Hz = 0b0011,
+        HrNormalLowPower200Hz = 0b0100,
+        HrNormalLowPower400Hz = 0b0101,
+        HrNormalLowPower800Hz = 0b0110,
     };
 
-    enum MagnetometerODR {
+    enum MagnetometerODR
+    {
         Hz0_625 = 0b000,
         Hz1_25 = 0b001,
         Hz2_5 = 0b010,
@@ -287,16 +293,18 @@ public:
         Hz80 = 0b111,
     };
 
-    enum MagnetometerSystemMode {
-        Continuous = 0b00,
-        Single = 0b01,
-        PowerDown_M = 0b10,
+    enum MagnetometerSystemMode
+    {
+        MagSysLowPowerMode = 0b00,
+        MagSysMedPerfMode = 0b01,
+        MagSysHighPerfMode = 0b10,
+        MagSysUltraHighPerfMode = 0b11
     };
 
+    // enums hieronder chacken
 
-// enums hieronder chacken
-
-    enum Axes {
+    enum Axes
+    {
         NoAxis = 0,
         X = 0b001,
         Y = 0b010,
@@ -307,20 +315,22 @@ public:
         XYZ = X | Y | Z
     };
 
-    enum MagAxes {
+    enum MagAxes
+    {
         MagX = 0b100,
         MagY = 0b010,
         MagZ = 0b001
     };
 
-    enum Scale {
+    enum Scale
+    {
         Scale2g = 0,
-        Scale4g = 0b01,
-        Scale8g = 0b10,
-        Scale16g = 0b11
+        Scale4g = 0b10,
+        Scale8g = 0b11,
     };
 
-    enum AxesEvents {
+    enum AxesEvents
+    {
         ZHigh = 0b00100000,
         ZLow = 0b00010000,
         YHigh = 0b00001000,
@@ -329,23 +339,24 @@ public:
         XLow = 0b00000001
     };
 
-    enum InterruptMode {
+    enum InterruptMode
+    {
         OrCombination = 0b00000000,
         MovementRecognition = 0b01000000,
         AndCombination = 0b10000000,
         PositionRecognition = 0b11000000
     };
 
-    Sodaq_LSM303C(TwoWire& wire = Wire, uint8_t accelAddress = SODAQ_LSM303C_ACCEL_ADDRESS, uint8_t magAddress = SODAQ_LSM303C_MAG_ADDRESS);
+    Sodaq_LSM303C(TwoWire &wire = Wire, uint8_t accelAddress = SODAQ_LSM303C_ACCEL_ADDRESS, uint8_t magAddress = SODAQ_LSM303C_MAG_ADDRESS);
 
     bool checkWhoAmI();
     int16_t getTemperature();
     // int8_t getTemperature();
-    void enableAccelerometer(AccelerometerMode mode = NormalMode, AccelerometerODR odr = HrNormalLowPower25Hz, Axes axes = XYZ, Scale scale = Scale2g);
+    void enableAccelerometer(AccelerometerMode mode = NormalMode, AccelerometerODR odr = HrNormalLowPower10Hz, Axes axes = XYZ, Scale scale = Scale2g, bool isTemperatureOn = true);
     void disableAccelerometer();
     void rebootAccelerometer();
 
-    void enableMagnetometer(MagnetometerMode mode = MagLowPowerMode, MagnetometerODR odr = Hz10, MagnetometerSystemMode systemMode = Single, bool enableLPF = true, bool isTemperatureOn = true);
+    void enableMagnetometer(MagnetometerMode mode = MagLowPowerMode, MagnetometerODR odr = Hz10, MagnetometerSystemMode systemMode = MagSysLowPowerMode, bool enableLPF = true, bool isTemperatureOn = true);
     void disableMagnetometer();
     void rebootMagnetometer();
 
@@ -363,8 +374,9 @@ public:
     double getMagX() { return getMagFromScaledValue(readMagRegister16Bits(Sodaq_LSM303C::OUT_X_L_M)); };
     double getMagY() { return getMagFromScaledValue(readMagRegister16Bits(Sodaq_LSM303C::OUT_Y_L_M)); };
     double getMagZ() { return getMagFromScaledValue(readMagRegister16Bits(Sodaq_LSM303C::OUT_Z_L_M)); };
+
 protected:
-    TwoWire& _wire;
+    TwoWire &_wire;
     uint8_t _accelAddress;
     uint8_t _magAddress;
     Scale _accelScale = Scale::Scale2g;
