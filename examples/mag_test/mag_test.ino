@@ -12,23 +12,28 @@ void magInterrupt()
 void setup()
 {
     SerialUSB.begin(57600);
-    delay(1000);
+
+    while ((!SerialUSB) && (millis() < 10000)) {
+        // Wait 10 seconds for the Serial Monitor
+    }
 
     SerialUSB.println("BEGIN");
     Wire.begin();
     delay(1000);
 
-    if (accel.checkWhoAmI()) {
+    accel.rebootAccelerometer();
+    delay(1000);
+    
+    accel.enableAccelerometer();
+
+     if (accel.checkWhoAmI()) {
         SerialUSB.println("FOUND ACCEL!");
     }
     else {
         SerialUSB.println("NO ACCEL!");
     }
 
-    accel.rebootMagnetometer();
-    delay(1000);
-
-    accel.enableMagnetometer(Sodaq_LSM303C::MagLowPowerMode, Sodaq_LSM303C::Hz80, Sodaq_LSM303C::Continuous);
+    accel.enableMagnetometer();
 
     // uint8_t axes = Sodaq_LSM303C::MagX;
     // accel.enableMagnetometerInterrupt(axes, -400);
@@ -42,6 +47,15 @@ void loop()
     delay(1000);
 
     SerialUSB.println(accel.getTemperature());
+
+    SerialUSB.println(accel.getTemperature());
+
+    if (accel.checkWhoAmI()) {
+        SerialUSB.println("FOUND ACCEL!");
+    }
+    else {
+        SerialUSB.println("NO ACCEL!");
+    }
 
     // SerialUSB.print(accel.getMagX());
     // SerialUSB.print(" ");

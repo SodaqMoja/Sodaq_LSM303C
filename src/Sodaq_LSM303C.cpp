@@ -1,103 +1,29 @@
+#include "Sodaq_LSM303C.h"
 #include <Arduino.h>
 #include <math.h>
-#include "Sodaq_LSM303C.h"
 
-#define _BV(bit) (1 << (bit))
-
-double mapDouble(double x, double in_min, double in_max, double out_min, double out_max)
-{
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-Sodaq_LSM303C::Sodaq_LSM303C(TwoWire &wire, uint8_t accelAddress, uint8_t magAddress) : _wire(wire),
-                                                                                        _accelAddress(accelAddress),
-                                                                                        _magAddress(magAddress),
-                                                                                        _accelScale(Scale2g)
+Sodaq_LSM303C::Sodaq_LSM303C(TwoWire& wire, uint8_t accelAddress, uint8_t magAddress)
+    : _wire(wire), _accelAddress(accelAddress), _magAddress(magAddress), _accelScale(Scale2g)
 {
 }
 
-int16_t Sodaq_LSM303C::getTemperature()
+int8_t Sodaq_LSM303C::getTemperature()
 {
-    // return readMagRegister16Bits(TEMP_L_M);
-    uint8_t data_h = 0x00;
-    uint8_t data_l = 0x00;
-
-    data_h = readMagRegister(TEMP_H_M);
-    data_l = readMagRegister(TEMP_L_M);
-
-    uint16_t temp = (int16_t)((data_h << 8) | data_l);
-
-    return temp;
+    int16_t value = readMagRegister16Bits(TEMP_L_M) / 8 + 25.0f;
+    return value;
 }
-
-// int8_t Sodaq_LSM303C::getTemperature()
-// {
-//     int16_t value = readMagRegister16Bits(TEMP_L_M);
-//     SerialUSB.println(value);
-
-//     if (_accelMode == AccelerometerMode::HighResMode || _accelMode == AccelerometerMode::NormalMode) {
-//         value /= pow(2, 6); // 12-bit value
-
-//         return value / 4.0f + 25.0f;
-//     }
-//     else if (_accelMode == AccelerometerMode::LowPowerMode) {
-//         value /= pow(2, 8); // 8-bit value
-
-//         return value + 25.0f;
-//     }
-
-//     return 0.0f;
-// }
 
 double Sodaq_LSM303C::getGsFromScaledValue(int16_t value)
 {
-    if (_accelMode == AccelerometerMode::HighResMode)
-    {
-        value /= pow(2, 4); // 12-bit value
-
-        switch (_accelScale)
-        {
+    switch (_accelScale) {
         case Scale::Scale2g:
-            return value * 1.0f / 1000.0f;
+            return value * 0.061f / 1000.0f;
         case Scale::Scale4g:
-            return value * 2.0f / 1000.0f;
+            return value * 0.122f / 1000.0f;
         case Scale::Scale8g:
-            return value * 4.0f / 1000.0f;
+            return value * 0.244f / 1000.0f;
         default:
             break;
-        }
-    }
-    else if (_accelMode == AccelerometerMode::NormalMode)
-    {
-        value /= pow(2, 6); // 10-bit value
-
-        switch (_accelScale)
-        {
-        case Scale::Scale2g:
-            return value * 4.0f / 1000.0f;
-        case Scale::Scale4g:
-            return value * 8.0f / 1000.0f;
-        case Scale::Scale8g:
-            return value * 16.0f / 1000.0f;
-        default:
-            break;
-        }
-    }
-    else if (_accelMode == AccelerometerMode::LowPowerMode)
-    {
-        value /= pow(2, 8); // 8-bit value
-
-        switch (_accelScale)
-        {
-        case Scale::Scale2g:
-            return value * 16.0f / 1000.0f;
-        case Scale::Scale4g:
-            return value * 32.0f / 1000.0f;
-        case Scale::Scale8g:
-            return value * 64.0f / 1000.0f;
-        default:
-            break;
-        }
     }
 
     return 0.0f;
@@ -105,32 +31,28 @@ double Sodaq_LSM303C::getGsFromScaledValue(int16_t value)
 
 double Sodaq_LSM303C::getMagFromScaledValue(int16_t value)
 {
-    return value * 1.5;
+    return value * 0.58;
 }
 
 bool Sodaq_LSM303C::checkWhoAmI()
 {
-    //SerialUSB.println(readAccelRegister(WHO_AM_I_A));
-    //SerialUSB.println(readAccelRegister(WHO_AM_I_M));
-    return (readAccelRegister(WHO_AM_I_A) == WHOAMI_ID_A_LSM303C) &&
-           (readMagRegister(WHO_AM_I_M) == WHOAMI_ID_M_LSM303C);
+    return (readAccelRegister(WHO_AM_I_A) == WHOAMI_ID_A_LSM303C) && (readMagRegister(WHO_AM_I_M) == WHOAMI_ID_M_LSM303C);
 }
 
 void Sodaq_LSM303C::enableAccelerometer(AccelerometerMode mode, AccelerometerODR odr, Axes axes, Scale scale, bool isTemperatureOn)
 {
     // set odr, mode, enabled axes
     // Note: the values of AccelerometerMode are 0b(LPen,HR)
-    uint8_t ctrlReg1A = 0 | (odr << ODR0) | axes | _BV(BDU_A);
+    uint8_t ctrlReg1A = 0 | (odr << ODR0) | axes | bit(BDU_A);
     writeAccelRegister(CTRL_REG1_A, ctrlReg1A);
 
     uint8_t ctrlReg4A = readAccelRegister(CTRL_REG4_A);
-    if ((mode & 0b01) == 0b01) //Highres
+    if ((mode & 0b01) == 0b01) // Highres
     {
-        ctrlReg4A |= _BV(HR);
+        ctrlReg4A |= bit(HR);
     }
-    else
-    {
-        ctrlReg4A &= ~_BV(HR);
+    else {
+        ctrlReg4A &= ~bit(HR);
     }
 
     // set scale
@@ -147,46 +69,40 @@ void Sodaq_LSM303C::enableAccelerometer(AccelerometerMode mode, AccelerometerODR
 void Sodaq_LSM303C::enableMagnetometer(MagnetometerMode mode, MagnetometerODR odr, MagnetometerSystemMode systemMode, bool enableLPF, bool isTemperatureOn)
 {
     // set odr, mode, systemMode
-    writeMagRegister(CTRL_REG1_M, 0|(odr << DO0));
+    writeMagRegister(CTRL_REG1_M, 0 | (odr << DO0));
     setMagRegisterBits(CTRL_REG1_M, (systemMode << OM0));
     writeMagRegister(CTRL_REG2_M, 0);
-    writeMagRegister(CTRL_REG3_M, 0b00000000);
+    writeMagRegister(CTRL_REG3_M, 0);
 
-    if (mode == MagLowPowerMode)
-    {
-        setMagRegisterBits(CTRL_REG3_M, _BV(LP));
+    if (mode == MagLowPowerMode) {
+        setMagRegisterBits(CTRL_REG3_M, bit(LP));
     }
-    else
-    {
-        unsetMagRegisterBits(CTRL_REG3_M, _BV(LP));
+    else {
+        unsetMagRegisterBits(CTRL_REG3_M, bit(LP));
     }
 
     // disable offset cancellation
-    // unsetMagRegisterBits(CFG_REG_B_M, _BV(OFF_CANC));
+    // unsetMagRegisterBits(CFG_REG_B_M, bit(OFF_CANC));
 
     setLPF(enableLPF);
 
-    if (isTemperatureOn)
-    {
+    if (isTemperatureOn) {
         // enable aux ADC and temperature sensor
-        setMagRegisterBits(CTRL_REG1_M, _BV(TEMP_EN));
+        setMagRegisterBits(CTRL_REG1_M, bit(TEMP_EN));
     }
-    else
-    {
+    else {
         // disable aux ADC and temperature sensor
-        unsetMagRegisterBits(CTRL_REG1_M, _BV(TEMP_EN));
+        unsetMagRegisterBits(CTRL_REG1_M, bit(TEMP_EN));
     }
 }
 
 void Sodaq_LSM303C::setLPF(bool enabled)
 {
-    if (enabled)
-    {
-        setMagRegisterBits(CTRL_REG3_M, _BV(LP));
+    if (enabled) {
+        setMagRegisterBits(CTRL_REG3_M, bit(LP));
     }
-    else
-    {
-        unsetMagRegisterBits(CTRL_REG3_M, _BV(LP));
+    else {
+        unsetMagRegisterBits(CTRL_REG3_M, bit(LP));
     }
 }
 
@@ -202,12 +118,12 @@ void Sodaq_LSM303C::disableMagnetometer()
 
 void Sodaq_LSM303C::rebootAccelerometer()
 {
-    writeAccelRegister(CTRL_REG6_A, _BV(BOOT));
+    writeAccelRegister(CTRL_REG6_A, bit(BOOT));
 }
 
 void Sodaq_LSM303C::rebootMagnetometer()
 {
-    writeMagRegister(CTRL_REG2_M, _BV(REBOOT));
+    writeMagRegister(CTRL_REG2_M, bit(REBOOT));
 }
 
 void Sodaq_LSM303C::setRegisterBits(uint8_t deviceAddress, Register reg, uint8_t byteValue)
@@ -228,19 +144,18 @@ uint8_t Sodaq_LSM303C::getScaledInterruptThreshold(double threshold)
 {
     uint8_t divider = 0; // divider in mg
 
-    switch (_accelScale)
-    {
-    case Scale::Scale2g:
-        divider = 16;
-        break;
-    case Scale::Scale4g:
-        divider = 32;
-        break;
-    case Scale::Scale8g:
-        divider = 62;
-        break;
-    default:
-        break;
+    switch (_accelScale) {
+        case Scale::Scale2g:
+            divider = 16;
+            break;
+        case Scale::Scale4g:
+            divider = 32;
+            break;
+        case Scale::Scale8g:
+            divider = 62;
+            break;
+        default:
+            break;
     }
 
     return trunc(threshold * 8000.0f / divider);
@@ -251,26 +166,28 @@ void Sodaq_LSM303C::enableInterrupt1(uint8_t axesEvents, double threshold, uint8
     // setup the interrupt
     writeAccelRegister(IG_CFG1_A, interruptMode | (axesEvents & 0b00111111));
     // writeAccelRegister(INT1_THS_A, getScaledInterruptThreshold(threshold));
-    writeAccelRegister(IG_DUR1_A, 0 | (duration & 0b01111111)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_DUR1_A,
+                       0 | (duration & 0b01111111)); // time duration is INT1_DURATION_A/ODR
 
-    SerialUSB.println(getScaledInterruptThreshold(threshold));
-
-    writeAccelRegister(IG_THS_X1_A, getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
-    writeAccelRegister(IG_THS_Y1_A, getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
-    writeAccelRegister(IG_THS_Z1_A, getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_THS_X1_A,
+                       getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_THS_Y1_A,
+                       getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_THS_Z1_A,
+                       getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
 
     // disable latching
-    unsetAccelRegisterBits(CTRL_REG7_A, _BV(LIR1));
-    unsetAccelRegisterBits(CTRL_REG7_A, _BV(I4D_IG1));
+    unsetAccelRegisterBits(CTRL_REG7_A, bit(LIR1));
+    unsetAccelRegisterBits(CTRL_REG7_A, bit(I4D_IG1));
 
     // enable interrupt generator 1 on INT1
-    setAccelRegisterBits(CTRL_REG3_A, _BV(INT_XL_IG1));
+    setAccelRegisterBits(CTRL_REG3_A, bit(INT_XL_IG1));
 }
 
 void Sodaq_LSM303C::disableInterrupt1()
 {
     // disable interrupt generator 1
-    unsetAccelRegisterBits(CTRL_REG3_A, _BV(INT_XL_IG1));
+    unsetAccelRegisterBits(CTRL_REG3_A, bit(INT_XL_IG1));
 }
 
 void Sodaq_LSM303C::enableInterrupt2(uint8_t axesEvents, double threshold, uint8_t duration, InterruptMode interruptMode)
@@ -278,26 +195,27 @@ void Sodaq_LSM303C::enableInterrupt2(uint8_t axesEvents, double threshold, uint8
     // setup the interrupt
     writeAccelRegister(IG_CFG2_A, interruptMode | (axesEvents & 0b00111111));
     // writeAccelRegister(INT2_THS_A, getScaledInterruptThreshold(threshold));
-    writeAccelRegister(IG_DUR2_A, duration); // time duration is INT2_DURATION_A/ODR
+    writeAccelRegister(IG_DUR2_A,
+                       duration); // time duration is INT2_DURATION_A/ODR
 
     // disable latching
-    // unsetAccelRegisterBits(CTRL_REG3_A, _BV(LIR_IG2));
+    // unsetAccelRegisterBits(CTRL_REG3_A, bit(LIR_IG2));
 
     // enable interrupt generator 2 on INT2
-    setAccelRegisterBits(CTRL_REG3_A, _BV(INT_XL_IG2));
+    setAccelRegisterBits(CTRL_REG3_A, bit(INT_XL_IG2));
 }
 
 void Sodaq_LSM303C::disableInterrupt2()
 {
     // disable interrupt generator 2 on INT2
-    unsetAccelRegisterBits(CTRL_REG3_A, _BV(INT_XL_IG2));
+    unsetAccelRegisterBits(CTRL_REG3_A, bit(INT_XL_IG2));
 }
 
 void Sodaq_LSM303C::enableMagnetometerInterrupt(uint8_t magAxesEvents, double threshold, bool highOnInterrupt)
 {
-    // threshold needs to be positive, because mag checks interrupts for -threshold and +threshold always
-    if (threshold < 0)
-    {
+    // threshold needs to be positive, because mag checks interrupts for
+    // -threshold and +threshold always
+    if (threshold < 0) {
         threshold = -threshold;
     }
 
@@ -305,13 +223,11 @@ void Sodaq_LSM303C::enableMagnetometerInterrupt(uint8_t magAxesEvents, double th
     writeMagRegister(INT_CFG_M, (magAxesEvents << ZIEN));
 
     // interrupt mode
-    if (highOnInterrupt)
-    {
-        setMagRegisterBits(INT_CFG_M, _BV(IEA));
+    if (highOnInterrupt) {
+        setMagRegisterBits(INT_CFG_M, bit(IEA));
     }
-    else
-    {
-        unsetMagRegisterBits(INT_CFG_M, _BV(IEA));
+    else {
+        unsetMagRegisterBits(INT_CFG_M, bit(IEA));
     }
 
     // set threshold registers
@@ -320,22 +236,22 @@ void Sodaq_LSM303C::enableMagnetometerInterrupt(uint8_t magAxesEvents, double th
     writeMagRegister(INT_THS_H_M, (ths & 0xFF00) >> 8);
 
     // disable latching
-    unsetMagRegisterBits(INT_CFG_M, _BV(IEL));
+    unsetMagRegisterBits(INT_CFG_M, bit(IEL));
 
     // enable mag interrupt
-    setMagRegisterBits(INT_CFG_M, _BV(IEN));
+    setMagRegisterBits(INT_CFG_M, bit(IEN));
 
     // enable DRDYpin as output
-    // setMagRegisterBits(CFG_REG_C_M, _BV(INT_MAG));
+    // setMagRegisterBits(CFG_REG_C_M, bit(INT_MAG));
 
     // set mag interrupt to INT_MAG_PIN
-    // setMagRegisterBits(CFG_REG_C_M, _BV(INT_MAG_PIN));
+    // setMagRegisterBits(CFG_REG_C_M, bit(INT_MAG_PIN));
 }
 
 void Sodaq_LSM303C::disableMagnetometerInterrupt()
 {
     // disable mag interrupt
-    unsetMagRegisterBits(INT_CFG_M, _BV(IEN));
+    unsetMagRegisterBits(INT_CFG_M, bit(IEN));
 }
 
 uint8_t Sodaq_LSM303C::readRegister(uint8_t deviceAddress, uint8_t reg)

@@ -1,20 +1,19 @@
 #ifndef SODAQ_LSM303C_H_
 #define SODAQ_LSM303C_H_
 
-#include <stdint.h>
 #include <Wire.h>
+#include <stdint.h>
+
 
 #define SODAQ_LSM303C_ACCEL_ADDRESS 0b0011101
-#define SODAQ_LSM303C_MAG_ADDRESS 0b0011110
+#define SODAQ_LSM303C_MAG_ADDRESS   0b0011110
 
 #define WHOAMI_ID_A_LSM303C 0b01000001
 #define WHOAMI_ID_M_LSM303C 0b00111101
 
-class Sodaq_LSM303C
-{
+class Sodaq_LSM303C {
 public:
-    enum Register
-    {
+    enum Register {
         WHO_AM_I_A = 0x0F,
         ACT_THS_A = 0x1E,
         ACT_DUR_A = 0x1F,
@@ -71,8 +70,7 @@ public:
         INT_THS_H_M = 0x33,
     };
 
-    enum RegisterBits
-    {
+    enum RegisterBits {
         // CTRL_REG1_A
         Xen = 0,
         Yen = 1,
@@ -173,8 +171,7 @@ public:
         DUR1_0 = 0,
     };
 
-    enum MagRegisterBits
-    {
+    enum MagRegisterBits {
         // CTRL_REG1_M
         ST = 0,
         DO0 = 2,
@@ -236,7 +233,7 @@ public:
         PTH_Y = 6,
         PTH_X = 7,
 
-        //INT_THS_H_M
+        // INT_THS_H_M
         THS14 = 6,
         THS13 = 5,
         THS12 = 4,
@@ -245,7 +242,7 @@ public:
         THS9 = 1,
         THS8 = 0,
 
-        //INT_THS_L_M 7
+        // INT_THS_L_M 7
         THS7 = 7,
         THS6 = 6,
         THS5 = 5,
@@ -257,21 +254,11 @@ public:
     };
 
     // the values of the following enum are 0b(LPen,HR)
-    enum AccelerometerMode
-    {
-        LowPowerMode = 0b10,
-        NormalMode = 0b00,
-        HighResMode = 0b01
-    };
+    enum AccelerometerMode { LowPowerMode = 0b10, NormalMode = 0b00, HighResMode = 0b01 };
 
-    enum MagnetometerMode
-    {
-        MagLowPowerMode = 0b0,
-        MagHighResMode = 0b1
-    };
+    enum MagnetometerMode { MagLowPowerMode = 0b0, MagHighResMode = 0b1 };
 
-    enum AccelerometerODR
-    {
+    enum AccelerometerODR {
         PowerDown_A = 0b000,
         HrNormalLowPower10Hz = 0b0001,
         HrNormalLowPower50Hz = 0b0010,
@@ -281,8 +268,7 @@ public:
         HrNormalLowPower800Hz = 0b0110,
     };
 
-    enum MagnetometerODR
-    {
+    enum MagnetometerODR {
         Hz0_625 = 0b000,
         Hz1_25 = 0b001,
         Hz2_5 = 0b010,
@@ -293,70 +279,43 @@ public:
         Hz80 = 0b111,
     };
 
-    enum MagnetometerSystemMode
-    {
-        MagSysLowPowerMode = 0b00,
-        MagSysMedPerfMode = 0b01,
-        MagSysHighPerfMode = 0b10,
-        MagSysUltraHighPerfMode = 0b11
-    };
+    enum MagnetometerSystemMode { MagSysLowPowerMode = 0b00, MagSysMedPerfMode = 0b01, MagSysHighPerfMode = 0b10, MagSysUltraHighPerfMode = 0b11 };
 
     // enums hieronder chacken
 
-    enum Axes
-    {
-        NoAxis = 0,
-        X = 0b001,
-        Y = 0b010,
-        Z = 0b100,
-        XY = X | Y,
-        XZ = X | Z,
-        YZ = Y | Z,
-        XYZ = X | Y | Z
-    };
+    enum Axes { NoAxis = 0, X = 0b001, Y = 0b010, Z = 0b100, XY = X | Y, XZ = X | Z, YZ = Y | Z, XYZ = X | Y | Z };
 
-    enum MagAxes
-    {
-        MagX = 0b100,
-        MagY = 0b010,
-        MagZ = 0b001
-    };
+    enum MagAxes { MagX = 0b100, MagY = 0b010, MagZ = 0b001 };
 
-    enum Scale
-    {
+    enum Scale {
         Scale2g = 0,
         Scale4g = 0b10,
         Scale8g = 0b11,
     };
 
-    enum AxesEvents
-    {
-        ZHigh = 0b00100000,
-        ZLow = 0b00010000,
-        YHigh = 0b00001000,
-        YLow = 0b00000100,
-        XHigh = 0b00000010,
-        XLow = 0b00000001
-    };
+    enum AxesEvents { ZHigh = 0b00100000, ZLow = 0b00010000, YHigh = 0b00001000, YLow = 0b00000100, XHigh = 0b00000010, XLow = 0b00000001 };
 
-    enum InterruptMode
-    {
-        OrCombination = 0b00000000,
-        MovementRecognition = 0b01000000,
-        AndCombination = 0b10000000,
-        PositionRecognition = 0b11000000
-    };
+    enum InterruptMode { OrCombination = 0b00000000, MovementRecognition = 0b01000000, AndCombination = 0b10000000, PositionRecognition = 0b11000000 };
 
-    Sodaq_LSM303C(TwoWire &wire = Wire, uint8_t accelAddress = SODAQ_LSM303C_ACCEL_ADDRESS, uint8_t magAddress = SODAQ_LSM303C_MAG_ADDRESS);
+    Sodaq_LSM303C(TwoWire& wire = Wire, uint8_t accelAddress = SODAQ_LSM303C_ACCEL_ADDRESS, uint8_t magAddress = SODAQ_LSM303C_MAG_ADDRESS);
 
     bool checkWhoAmI();
-    int16_t getTemperature();
-    // int8_t getTemperature();
-    void enableAccelerometer(AccelerometerMode mode = NormalMode, AccelerometerODR odr = HrNormalLowPower10Hz, Axes axes = XYZ, Scale scale = Scale2g, bool isTemperatureOn = true);
+    int8_t getTemperature();
+    void enableAccelerometer(
+        AccelerometerMode mode = LowPowerMode,
+        AccelerometerODR odr = HrNormalLowPower10Hz,
+        Axes axes = XYZ,
+        Scale scale = Scale2g,
+        bool isTemperatureOn = true);
     void disableAccelerometer();
     void rebootAccelerometer();
 
-    void enableMagnetometer(MagnetometerMode mode = MagLowPowerMode, MagnetometerODR odr = Hz10, MagnetometerSystemMode systemMode = MagSysLowPowerMode, bool enableLPF = true, bool isTemperatureOn = true);
+    void enableMagnetometer(
+        MagnetometerMode mode = MagLowPowerMode,
+        MagnetometerODR odr = Hz10,
+        MagnetometerSystemMode systemMode = MagSysLowPowerMode,
+        bool enableLPF = true,
+        bool isTemperatureOn = true);
     void disableMagnetometer();
     void rebootMagnetometer();
 
@@ -376,7 +335,7 @@ public:
     double getMagZ() { return getMagFromScaledValue(readMagRegister16Bits(Sodaq_LSM303C::OUT_Z_L_M)); };
 
 protected:
-    TwoWire &_wire;
+    TwoWire& _wire;
     uint8_t _accelAddress;
     uint8_t _magAddress;
     Scale _accelScale = Scale::Scale2g;
