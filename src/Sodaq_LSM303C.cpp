@@ -69,7 +69,7 @@ void Sodaq_LSM303C::enableAccelerometer(AccelerometerMode mode, AccelerometerODR
 void Sodaq_LSM303C::enableMagnetometer(MagnetometerMode mode, MagnetometerODR odr, MagnetometerSystemMode systemMode, bool enableLPF, bool isTemperatureOn)
 {
     // set odr, mode, systemMode
-    writeMagRegister(CTRL_REG1_M, 0 | (odr << DO0));
+    writeMagRegister(CTRL_REG1_M, odr << DO0);
     setMagRegisterBits(CTRL_REG1_M, (systemMode << OM0));
     writeMagRegister(CTRL_REG2_M, 0);
     writeMagRegister(CTRL_REG3_M, 0);
