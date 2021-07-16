@@ -43,7 +43,7 @@ void Sodaq_LSM303C::enableAccelerometer(AccelerometerMode mode, AccelerometerODR
 {
     // set odr, mode, enabled axes
     // Note: the values of AccelerometerMode are 0b(LPen,HR)
-    uint8_t ctrlReg1A = 0 | (odr << ODR0) | axes | bit(BDU_A);
+    uint8_t ctrlReg1A = (odr << ODR0) | axes | bit(BDU_A);
     writeAccelRegister(CTRL_REG1_A, ctrlReg1A);
 
     uint8_t ctrlReg4A = readAccelRegister(CTRL_REG4_A);
@@ -80,9 +80,6 @@ void Sodaq_LSM303C::enableMagnetometer(MagnetometerMode mode, MagnetometerODR od
     else {
         unsetMagRegisterBits(CTRL_REG3_M, bit(LP));
     }
-
-    // disable offset cancellation
-    // unsetMagRegisterBits(CFG_REG_B_M, bit(OFF_CANC));
 
     setLPF(enableLPF);
 
@@ -165,16 +162,11 @@ void Sodaq_LSM303C::enableInterrupt1(uint8_t axesEvents, double threshold, uint8
 {
     // setup the interrupt
     writeAccelRegister(IG_CFG1_A, interruptMode | (axesEvents & 0b00111111));
-    // writeAccelRegister(INT1_THS_A, getScaledInterruptThreshold(threshold));
-    writeAccelRegister(IG_DUR1_A,
-                       0 | (duration & 0b01111111)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_DUR1_A, (duration & 0b01111111)); // time duration is INT1_DURATION_A/ODR
 
-    writeAccelRegister(IG_THS_X1_A,
-                       getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
-    writeAccelRegister(IG_THS_Y1_A,
-                       getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
-    writeAccelRegister(IG_THS_Z1_A,
-                       getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_THS_X1_A, getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_THS_Y1_A, getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
+    writeAccelRegister(IG_THS_Z1_A, getScaledInterruptThreshold(threshold)); // time duration is INT1_DURATION_A/ODR
 
     // disable latching
     unsetAccelRegisterBits(CTRL_REG7_A, bit(LIR1));
@@ -194,12 +186,7 @@ void Sodaq_LSM303C::enableInterrupt2(uint8_t axesEvents, double threshold, uint8
 {
     // setup the interrupt
     writeAccelRegister(IG_CFG2_A, interruptMode | (axesEvents & 0b00111111));
-    // writeAccelRegister(INT2_THS_A, getScaledInterruptThreshold(threshold));
-    writeAccelRegister(IG_DUR2_A,
-                       duration); // time duration is INT2_DURATION_A/ODR
-
-    // disable latching
-    // unsetAccelRegisterBits(CTRL_REG3_A, bit(LIR_IG2));
+    writeAccelRegister(IG_DUR2_A, duration); // time duration is INT2_DURATION_A/ODR
 
     // enable interrupt generator 2 on INT2
     setAccelRegisterBits(CTRL_REG3_A, bit(INT_XL_IG2));
@@ -240,12 +227,6 @@ void Sodaq_LSM303C::enableMagnetometerInterrupt(uint8_t magAxesEvents, double th
 
     // enable mag interrupt
     setMagRegisterBits(INT_CFG_M, bit(IEN));
-
-    // enable DRDYpin as output
-    // setMagRegisterBits(CFG_REG_C_M, bit(INT_MAG));
-
-    // set mag interrupt to INT_MAG_PIN
-    // setMagRegisterBits(CFG_REG_C_M, bit(INT_MAG_PIN));
 }
 
 void Sodaq_LSM303C::disableMagnetometerInterrupt()
